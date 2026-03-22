@@ -50,8 +50,14 @@ function today() { return new Date().toISOString().slice(0,10); }
 async function inviaASheets(tipo, dati) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("INCOLLA")) return { ok: false, locale: true };
   try {
-    const res = await fetch(APPS_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ tipo, dati }) });
-    return await res.json();
+    const params = new URLSearchParams();
+    params.append("payload", JSON.stringify({ tipo, dati }));
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      body: params,
+    });
+    const text = await res.text();
+    return JSON.parse(text);
   } catch (e) { return { ok: false, errore: e.message }; }
 }
 
