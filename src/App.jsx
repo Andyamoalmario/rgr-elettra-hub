@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const APPS_SCRIPT_URL = const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyC6K7iR_RhRn1CNxcawlzoUGOhiBXFjDldV3qn1YEcDaEMxwH3ugZyL7At5DCWGlpE/exec";;
-
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyC6K7iR_RhRn1CNxcawlzoUGOhiBXFjDldV3qn1YEcDaEMxwH3ugZyL7At5DCWGlpE/exec";
 const DIPENDENTE_COLORS = [
   "#00b894","#0984e3","#e17055","#6c5ce7","#fdcb6e","#00cec9","#fd79a8","#55efc4"
 ];
