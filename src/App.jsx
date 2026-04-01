@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const APPS_SCRIPT_URL = "INCOLLA_QUI_IL_TUO_APPS_SCRIPT_URL";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyC6K7iR_RhRn1CNxcawlzoUGOhiBXFjDldV3qn1YEcDaEMxwH3ugZyL7At5DCWGlpE/exec";
 
 const DIPENDENTE_COLORS = ["#00b894","#0984e3","#e17055","#6c5ce7","#fdcb6e","#00cec9","#fd79a8","#55efc4"];
 
@@ -258,7 +258,6 @@ const css = `
   .read-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;margin:2px}
   .read-chip.yes{background:rgba(34,197,94,.15);color:var(--success)}
   .read-chip.no{background:rgba(239,68,68,.15);color:var(--danger)}
-  /* DASHBOARD */
   .dash-widget{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
   .dash-widget-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
   .cantiere-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;margin:3px;font-size:12px;font-weight:600}
@@ -266,22 +265,15 @@ const css = `
   .prossimo-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;margin-bottom:6px;background:var(--surface2)}
   .scadenza-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
   .map-placeholder{background:var(--surface2);border-radius:var(--radius-sm);height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden}
-  .map-pin{position:absolute;display:flex;flex-direction:column;align-items:center;cursor:pointer}
-  .map-pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.4)}
-  .map-pin-label{font-size:9px;font-weight:700;color:white;background:rgba(0,0,0,.6);border-radius:3px;padding:1px 4px;margin-top:2px;white-space:nowrap}
   .bar-chart{display:flex;align-items:flex-end;gap:6px;height:80px;padding:0 4px}
   .bar-col{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
   .bar-wrap{width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:64px;gap:2px}
   .bar{border-radius:3px 3px 0 0;width:100%;min-height:2px;transition:height .3s}
   .bar-lbl{font-size:9px;color:var(--text3);text-align:center}
-  .pie-row{display:flex;flex-wrap:wrap;gap:8px}
-  .pie-item{display:flex;align-items:center;gap:5px;font-size:11px}
-  .pie-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
   .search-bar{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px}
   .search-bar input{background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:14px;flex:1}
   .search-result{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:6px;cursor:pointer}
   .search-result:hover{border-color:var(--accent)}
-  /* CHANGE PWD SCREEN */
   .changepwd-screen{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:32px 24px;background:var(--bg)}
   .pwd-rule{display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:4px}
   .pwd-rule.ok{color:var(--success)}
@@ -309,15 +301,15 @@ function Field({label,required,err,children}) {
   return <div className="form-group"><label>{label}{required&&<span className="req">*</span>}</label>{children}{err&&<div className="field-err">- {err}</div>}</div>;
 }
 
-// ─── CHANGE PASSWORD (primo accesso) ──────────────────────────────────────────
-function ChangePasswordScreen({user, onSave}) {
+// ─── CHANGE PASSWORD ──────────────────────────────────────────────────────────
+function ChangePasswordScreen({user,onSave}) {
   const [pwd,setPwd]=useState({new1:"",new2:""});
   const [err,setErr]=useState("");
   const rules=[
-    {label:"Almeno 8 caratteri", ok: pwd.new1.length>=8},
-    {label:"Almeno una maiuscola", ok: /[A-Z]/.test(pwd.new1)},
-    {label:"Almeno un numero", ok: /[0-9]/.test(pwd.new1)},
-    {label:"Almeno un simbolo (es. !@#$)", ok: /[^A-Za-z0-9]/.test(pwd.new1)},
+    {label:"Almeno 8 caratteri",ok:pwd.new1.length>=8},
+    {label:"Almeno una maiuscola",ok:/[A-Z]/.test(pwd.new1)},
+    {label:"Almeno un numero",ok:/[0-9]/.test(pwd.new1)},
+    {label:"Almeno un simbolo (es. !@#$)",ok:/[^A-Za-z0-9]/.test(pwd.new1)},
   ];
   const allOk=rules.every(r=>r.ok);
   const handle=()=>{
@@ -336,11 +328,7 @@ function ChangePasswordScreen({user, onSave}) {
         {err&&<div className="error-msg">{err}</div>}
         <Field label="Nuova password"><input className="input" type="password" placeholder="Minimo 8 caratteri" value={pwd.new1} onChange={e=>setPwd(p=>({...p,new1:e.target.value}))}/></Field>
         <div style={{background:"var(--surface2)",border:"1px solid var(--border)",borderRadius:8,padding:12,marginBottom:14}}>
-          {rules.map((r,i)=>(
-            <div key={i} className={"pwd-rule "+(r.ok?"ok":"no")}>
-              <Icon name={r.ok?"check":"x"} size={13} color={r.ok?"var(--success)":"var(--text3)"}/> {r.label}
-            </div>
-          ))}
+          {rules.map((r,i)=><div key={i} className={"pwd-rule "+(r.ok?"ok":"no")}><Icon name={r.ok?"check":"x"} size={13} color={r.ok?"var(--success)":"var(--text3)"}/> {r.label}</div>)}
         </div>
         <Field label="Conferma password"><input className="input" type="password" placeholder="Ripeti la password" value={pwd.new2} onChange={e=>setPwd(p=>({...p,new2:e.target.value}))}/></Field>
         <button className="btn btn-primary" onClick={handle} disabled={!allOk}><Icon name="check" size={15}/> Imposta password</button>
@@ -401,52 +389,31 @@ function AdminDashboard({users,records,notifications,whistleblowing,scadenze,onS
   const [filtroCantiere,setFiltroCantiere]=useState("");
   const [filtroCliente,setFiltroCliente]=useState("");
   const dipendenti=users.filter(u=>u.role!=="Admin");
-
-  // Chi è in cantiere oggi (ha un mezzo attivo)
   const inCantiere=dipendenti.filter(u=>u.mezzoOggi&&u.mezzoOggi.data===tDay);
-
-  // Cantieri e clienti unici dai lavori di oggi
   const lavoriOggi=records.filter(r=>r.data===tDay&&!r.pianificato);
   const cantieriOggi=[...new Set(lavoriOggi.map(r=>r.cantiere).filter(Boolean))];
   const clientiOggi=[...new Set(lavoriOggi.map(r=>r.cliente).filter(Boolean))];
   const ruoliUnici=[...new Set(dipendenti.map(u=>u.role).filter(Boolean))];
-
-  // Dipendenti filtrati
   const dipendentiFiltrati=dipendenti.filter(u=>{
     if(showSoloAttivi&&!(u.mezzoOggi&&u.mezzoOggi.data===tDay)) return false;
     if(filtroRuolo&&u.role!==filtroRuolo) return false;
-    if(filtroCantiere){
-      const hasCantiere=lavoriOggi.some(r=>r.userId===u.id&&r.cantiere===filtroCantiere);
-      if(!hasCantiere) return false;
-    }
-    if(filtroCliente){
-      const hasCliente=lavoriOggi.some(r=>r.userId===u.id&&r.cliente===filtroCliente);
-      if(!hasCliente) return false;
-    }
+    if(filtroCantiere&&!lavoriOggi.some(r=>r.userId===u.id&&r.cantiere===filtroCantiere)) return false;
+    if(filtroCliente&&!lavoriOggi.some(r=>r.userId===u.id&&r.cliente===filtroCliente)) return false;
     return true;
   });
-
   const activeFiltri=[filtroRuolo,filtroCantiere,filtroCliente].filter(Boolean).length;
-
-  // Prossimi lavori: tutti i lavori di oggi non ancora terminati
   const nowMin=new Date().getHours()*60+new Date().getMinutes();
   const prossimi=records.filter(r=>{
     if(r.data!==tDay) return false;
-    // Prendi orario fine (se non c'è, considera il lavoro ancora attivo)
     const [hF,mF]=(r.oraFine||"23:59").split(":").map(Number);
-    const endMin=hF*60+mF;
-    return endMin>nowMin; // mostra solo se non ancora terminato
+    return (hF*60+mF)>nowMin;
   }).sort((a,b)=>{
     const [hA,mA]=(a.oraInizio||"00:00").split(":").map(Number);
     const [hB,mB]=(b.oraInizio||"00:00").split(":").map(Number);
     return (hA*60+mA)-(hB*60+mB);
   });
-
-  // Ore preventivate (pianificato:true) vs effettive per oggi
   const orePreventivate=records.filter(r=>r.data===tDay&&r.pianificato).reduce((s,r)=>s+calcOre(r.oraInizio,r.oraFine).totaleMin,0);
   const oreEffettive=records.filter(r=>r.data===tDay&&!r.pianificato).reduce((s,r)=>s+calcOre(r.oraInizio,r.oraFine).totaleMin,0);
-
-  // Tipologia interventi (ultimi 30 lavori)
   const tipi={};
   records.filter(r=>!r.pianificato).slice(0,30).forEach(r=>{
     const t=r.descrizione?r.descrizione.split(" ").slice(0,2).join(" "):"Altro";
@@ -455,126 +422,61 @@ function AdminDashboard({users,records,notifications,whistleblowing,scadenze,onS
   });
   const tipiArr=Object.entries(tipi).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const tipiColors=["#00b894","#0984e3","#e17055","#6c5ce7","#fdcb6e"];
-
-  // Alert: avvisi obbligatori non letti da tutti
   const alertNotif=notifications.filter(n=>n.type==="mandatory"&&n.read.length<dipendenti.length);
-
-  // Whistleblowing non letti
   const wbNonLetti=whistleblowing.filter(w=>!w.letto).length;
-
-  // Scadenze entro 30 giorni
   const oggi=new Date(); oggi.setHours(0,0,0,0);
   const fra30=new Date(oggi); fra30.setDate(oggi.getDate()+30);
-  const scadenzeVicine=scadenze.filter(s=>{
-    const d=new Date(s.scadenza); return d>=oggi&&d<=fra30;
-  }).sort((a,b)=>new Date(a.scadenza)-new Date(b.scadenza));
-
-  // Mappa: ultimi GPS per dipendente filtrato oggi
+  const scadenzeVicine=scadenze.filter(s=>{const d=new Date(s.scadenza);return d>=oggi&&d<=fra30;}).sort((a,b)=>new Date(a.scadenza)-new Date(b.scadenza));
   const mapPins=dipendentiFiltrati.filter(u=>u.mezzoOggi&&u.mezzoOggi.data===tDay).map(u=>{
     const last=records.filter(r=>r.userId===u.id&&r.gps&&r.data===tDay).sort((a,b)=>b.id-a.id)[0];
     return last?{name:u.name.split(" ")[0],color:u.color,gps:last.gps}:null;
   }).filter(Boolean);
-
-  // Ricerca globale
   const searchResults=search.length>1?[
     ...records.filter(r=>!r.pianificato&&(r.cliente||"").toLowerCase().includes(search.toLowerCase())).slice(0,3).map(r=>({tipo:"Lavoro",label:r.cliente,sub:r.data+" · "+(r.cantiere||"")})),
     ...dipendenti.filter(u=>u.name.toLowerCase().includes(search.toLowerCase())).map(u=>({tipo:"Dipendente",label:u.name,sub:u.role})),
     ...records.filter(r=>(r.cantiere||"").toLowerCase().includes(search.toLowerCase())).slice(0,3).map(r=>({tipo:"Cantiere",label:r.cantiere,sub:r.data})),
   ]:[];
-
   const maxBar=Math.max(orePreventivate,oreEffettive,1);
 
   return (
     <div className="content">
-      {selectedEvent&&<EventDetailModal ev={selectedEvent} onClose={()=>setSelectedEvent(null)}/>}
-      {editingEvent&&<EditEventModal ev={editingEvent} onClose={()=>setEditingEvent(null)}/>}
-      {/* Data e saluto */}
       <div style={{marginBottom:16}}>
         <h2 style={{fontSize:21,fontWeight:700}}>Dashboard 👋</h2>
         <p style={{fontSize:13,color:"var(--text2)",marginTop:2}}>{new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</p>
       </div>
-      {/* Ricerca globale */}
       <div className="search-bar">
         <Icon name="search" size={16} color="var(--text3)"/>
         <input placeholder="Cerca lavori, dipendenti, cantieri..." value={search} onChange={e=>setSearch(e.target.value)}/>
         {search&&<button style={{background:"none",border:"none",cursor:"pointer",color:"var(--text3)",padding:0}} onClick={()=>setSearch("")}><Icon name="x" size={14}/></button>}
       </div>
-      {searchResults.length>0&&(
-        <div style={{marginBottom:12}}>
-          {searchResults.map((r,i)=>(
-            <div key={i} className="search-result">
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <span style={{fontSize:10,fontWeight:700,background:"var(--surface2)",color:"var(--text2)",padding:"2px 6px",borderRadius:4}}>{r.tipo}</span>
-                <span style={{fontWeight:600,fontSize:13}}>{r.label}</span>
-              </div>
-              <div style={{fontSize:11,color:"var(--text3)",marginTop:2}}>{r.sub}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Tasti rapidi */}
+      {searchResults.length>0&&<div style={{marginBottom:12}}>{searchResults.map((r,i)=><div key={i} className="search-result"><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:10,fontWeight:700,background:"var(--surface2)",color:"var(--text2)",padding:"2px 6px",borderRadius:4}}>{r.tipo}</span><span style={{fontWeight:600,fontSize:13}}>{r.label}</span></div><div style={{fontSize:11,color:"var(--text3)",marginTop:2}}>{r.sub}</div></div>)}</div>}
       <div className="row-2" style={{marginBottom:14}}>
         <button className="btn btn-primary btn-sm" style={{fontSize:12}} onClick={onQuickNotif}><Icon name="send" size={13}/> Avviso rapido</button>
         <button className="btn btn-ghost btn-sm" style={{fontSize:12}} onClick={()=>onSetScreen("cal")}><Icon name="calendar" size={13}/> Calendario</button>
       </div>
-
-      {/* Alert urgenti */}
       {(alertNotif.length>0||wbNonLetti>0)&&(
         <div className="dash-widget" style={{borderColor:"rgba(239,68,68,.3)",background:"rgba(239,68,68,.04)"}}>
           <div className="dash-widget-title"><Icon name="warning" size={13} color="var(--danger)"/> Alert urgenti</div>
-          {alertNotif.map(n=>(
-            <div key={n.id} className="alert-item">
-              <Icon name="alert" size={14} color="var(--danger)"/>
-              <div style={{flex:1}}>
-                <div style={{fontSize:12,fontWeight:600}}>{n.title}</div>
-                <div style={{fontSize:11,color:"var(--text2)"}}>{n.read.length}/{dipendenti.length} confermato</div>
-              </div>
-            </div>
-          ))}
-          {wbNonLetti>0&&(
-            <div className="alert-item" style={{cursor:"pointer"}} onClick={()=>onSetScreen("admin")}>
-              <Icon name="shield" size={14} color="var(--danger)"/>
-              <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600}}>{wbNonLetti} segnalazione{wbNonLetti>1?"i":""} non lett{wbNonLetti>1?"e":"a"}</div></div>
-            </div>
-          )}
+          {alertNotif.map(n=><div key={n.id} className="alert-item"><Icon name="alert" size={14} color="var(--danger)"/><div style={{flex:1}}><div style={{fontSize:12,fontWeight:600}}>{n.title}</div><div style={{fontSize:11,color:"var(--text2)"}}>{n.read.length}/{dipendenti.length} confermato</div></div></div>)}
+          {wbNonLetti>0&&<div className="alert-item" style={{cursor:"pointer"}} onClick={()=>onSetScreen("admin")}><Icon name="shield" size={14} color="var(--danger)"/><div style={{flex:1}}><div style={{fontSize:12,fontWeight:600}}>{wbNonLetti} segnalazione{wbNonLetti>1?"i":""} non lett{wbNonLetti>1?"e":"a"}</div></div></div>}
         </div>
       )}
-
-      {/* Chi è in cantiere */}
       <div className="dash-widget">
         <div className="dash-widget-title"><Icon name="hardhat" size={13} color="var(--accent)"/> In cantiere ({inCantiere.length}/{dipendenti.length})</div>
-
-        {/* Toggle attivi/tutti */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
           <div style={{display:"flex",background:"var(--surface2)",borderRadius:8,padding:3,gap:2}}>
             <button onClick={()=>setShowSoloAttivi(true)} style={{padding:"4px 10px",borderRadius:6,border:"none",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",background:showSoloAttivi?"var(--accent)":"transparent",color:showSoloAttivi?"white":"var(--text2)",transition:"all .2s"}}>Solo attivi</button>
             <button onClick={()=>setShowSoloAttivi(false)} style={{padding:"4px 10px",borderRadius:6,border:"none",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",background:!showSoloAttivi?"var(--accent)":"transparent",color:!showSoloAttivi?"white":"var(--text2)",transition:"all .2s"}}>Tutti</button>
           </div>
-          {activeFiltri>0&&<button onClick={()=>{setFiltroRuolo("");setFiltroCantiere("");setFiltroCliente("");}} style={{fontSize:11,color:"var(--danger)",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600}}>✕ Resetta filtri ({activeFiltri})</button>}
+          {activeFiltri>0&&<button onClick={()=>{setFiltroRuolo("");setFiltroCantiere("");setFiltroCliente("");}} style={{fontSize:11,color:"var(--danger)",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600}}>✕ Resetta ({activeFiltri})</button>}
         </div>
-
-        {/* Filtri a tendina */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:12}}>
-          <select className="input" style={{padding:"7px 8px",fontSize:11}} value={filtroRuolo} onChange={e=>setFiltroRuolo(e.target.value)}>
-            <option value="">Tutti i ruoli</option>
-            {ruoliUnici.map(r=><option key={r} value={r}>{r}</option>)}
-          </select>
-          <select className="input" style={{padding:"7px 8px",fontSize:11}} value={filtroCantiere} onChange={e=>setFiltroCantiere(e.target.value)}>
-            <option value="">Tutti i cantieri</option>
-            {cantieriOggi.map(c=><option key={c} value={c}>{c.length>15?c.slice(0,15)+"…":c}</option>)}
-          </select>
-          <select className="input" style={{padding:"7px 8px",fontSize:11}} value={filtroCliente} onChange={e=>setFiltroCliente(e.target.value)}>
-            <option value="">Tutti i clienti</option>
-            {clientiOggi.map(c=><option key={c} value={c}>{c.length>15?c.slice(0,15)+"…":c}</option>)}
-          </select>
+          <select className="input" style={{padding:"7px 8px",fontSize:11}} value={filtroRuolo} onChange={e=>setFiltroRuolo(e.target.value)}><option value="">Tutti i ruoli</option>{ruoliUnici.map(r=><option key={r} value={r}>{r}</option>)}</select>
+          <select className="input" style={{padding:"7px 8px",fontSize:11}} value={filtroCantiere} onChange={e=>setFiltroCantiere(e.target.value)}><option value="">Tutti cantieri</option>{cantieriOggi.map(c=><option key={c} value={c}>{c.length>15?c.slice(0,15)+"…":c}</option>)}</select>
+          <select className="input" style={{padding:"7px 8px",fontSize:11}} value={filtroCliente} onChange={e=>setFiltroCliente(e.target.value)}><option value="">Tutti clienti</option>{clientiOggi.map(c=><option key={c} value={c}>{c.length>15?c.slice(0,15)+"…":c}</option>)}</select>
         </div>
-
-        {/* Risultati */}
         <div style={{fontSize:11,color:"var(--text3)",marginBottom:8}}>{dipendentiFiltrati.length} dipendent{dipendentiFiltrati.length===1?"e":"i"} mostrat{dipendentiFiltrati.length===1?"o":"i"}</div>
-
-        {dipendentiFiltrati.length===0&&<div style={{fontSize:12,color:"var(--text3)",textAlign:"center",padding:"12px 0"}}>Nessun risultato con i filtri selezionati</div>}
-
+        {dipendentiFiltrati.length===0&&<div style={{fontSize:12,color:"var(--text3)",textAlign:"center",padding:"12px 0"}}>Nessun risultato</div>}
         <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
           {dipendentiFiltrati.map(u=>{
             const attivo=u.mezzoOggi&&u.mezzoOggi.data===tDay;
@@ -593,37 +495,26 @@ function AdminDashboard({users,records,notifications,whistleblowing,scadenze,onS
           })}
         </div>
       </div>
-
-      {/* Mappa cantieri */}
       <div className="dash-widget">
         <div className="dash-widget-title"><Icon name="pin" size={13} color="var(--accent)"/> Mappa cantieri oggi</div>
         <div className="map-placeholder">
-          {mapPins.length===0?(
-            <>
-              <Icon name="pin" size={28} color="var(--text3)"/>
-              <span style={{fontSize:12,color:"var(--text3)"}}>Nessuna posizione GPS disponibile</span>
-            </>
-          ):(
-            <>
-              <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,#1e2330 0%,#2a3045 100%)",display:"grid",gridTemplateColumns:"1fr 1fr 1fr",placeItems:"center",padding:10}}>
-                {mapPins.map((p,i)=>(
-                  <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                    <div style={{width:16,height:16,borderRadius:"50%",background:p.color,border:"2px solid white",boxShadow:"0 2px 6px rgba(0,0,0,.4)"}}/>
-                    <div style={{fontSize:9,fontWeight:700,color:"white",background:"rgba(0,0,0,.6)",borderRadius:3,padding:"1px 4px"}}>{p.name}</div>
-                    <div style={{fontSize:8,color:"var(--text3)",fontFamily:"monospace"}}>{parseFloat(p.gps.lat).toFixed(3)}, {parseFloat(p.gps.lng).toFixed(3)}</div>
-                  </div>
-                ))}
-              </div>
-            </>
+          {mapPins.length===0?(<><Icon name="pin" size={28} color="var(--text3)"/><span style={{fontSize:12,color:"var(--text3)"}}>Nessuna posizione GPS disponibile</span></>):(
+            <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,#1e2330 0%,#2a3045 100%)",display:"grid",gridTemplateColumns:"1fr 1fr 1fr",placeItems:"center",padding:10}}>
+              {mapPins.map((p,i)=>(
+                <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                  <div style={{width:16,height:16,borderRadius:"50%",background:p.color,border:"2px solid white",boxShadow:"0 2px 6px rgba(0,0,0,.4)"}}/>
+                  <div style={{fontSize:9,fontWeight:700,color:"white",background:"rgba(0,0,0,.6)",borderRadius:3,padding:"1px 4px"}}>{p.name}</div>
+                  <div style={{fontSize:8,color:"var(--text3)",fontFamily:"monospace"}}>{parseFloat(p.gps.lat).toFixed(3)}, {parseFloat(p.gps.lng).toFixed(3)}</div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
-        <div style={{fontSize:10,color:"var(--text3)",marginTop:6}}>Posizione basata sull'ultimo lavoro registrato oggi con GPS</div>
+        <div style={{fontSize:10,color:"var(--text3)",marginTop:6}}>Posizione basata sull'ultimo lavoro con GPS oggi</div>
       </div>
-
-      {/* Prossimi lavori */}
       <div className="dash-widget">
         <div className="dash-widget-title"><Icon name="clock" size={13} color="var(--warning)"/> Prossimi lavori oggi ({prossimi.length})</div>
-        {prossimi.length===0&&<div style={{fontSize:12,color:"var(--text3)"}}>Nessun lavoro nelle prossime 4 ore</div>}
+        {prossimi.length===0&&<div style={{fontSize:12,color:"var(--text3)"}}>Nessun lavoro attivo o in arrivo oggi</div>}
         {prossimi.map((r,i)=>{
           const u=users.find(x=>x.id===r.userId);
           const [hS,mS]=(r.oraInizio||"00:00").split(":").map(Number);
@@ -631,7 +522,6 @@ function AdminDashboard({users,records,notifications,whistleblowing,scadenze,onS
           const [hF2,mF2]=(r.oraFine||"23:59").split(":").map(Number);
           const endMin=hF2*60+mF2;
           const inCorso=startMin<=nowMin&&endMin>nowMin;
-          const nonIniziato=startMin>nowMin;
           const diffMin=startMin-nowMin;
           const diffLabel=inCorso?"🟢 In corso":diffMin<60?"tra "+diffMin+"min":"tra "+Math.floor(diffMin/60)+"h"+(diffMin%60?" "+diffMin%60+"m":"");
           return (
@@ -646,45 +536,20 @@ function AdminDashboard({users,records,notifications,whistleblowing,scadenze,onS
           );
         })}
       </div>
-
-      {/* Grafico ore */}
       <div className="dash-widget">
         <div className="dash-widget-title"><Icon name="chart" size={13} color="var(--accent)"/> Ore oggi: preventivate vs effettive</div>
         <div className="bar-chart">
-          <div className="bar-col">
-            <div className="bar-wrap">
-              <div className="bar" style={{height:`${(orePreventivate/maxBar)*100}%`,background:"var(--accent2)"}}/>
-            </div>
-            <div className="bar-lbl">Prev.<br/>{fmt(orePreventivate)}</div>
-          </div>
-          <div className="bar-col">
-            <div className="bar-wrap">
-              <div className="bar" style={{height:`${(oreEffettive/maxBar)*100}%`,background:"var(--accent)"}}/>
-            </div>
-            <div className="bar-lbl">Eff.<br/>{fmt(oreEffettive)}</div>
-          </div>
+          <div className="bar-col"><div className="bar-wrap"><div className="bar" style={{height:`${(orePreventivate/maxBar)*100}%`,background:"var(--accent2)"}}/></div><div className="bar-lbl">Prev.<br/>{fmt(orePreventivate)}</div></div>
+          <div className="bar-col"><div className="bar-wrap"><div className="bar" style={{height:`${(oreEffettive/maxBar)*100}%`,background:"var(--accent)"}}/></div><div className="bar-lbl">Eff.<br/>{fmt(oreEffettive)}</div></div>
         </div>
         {orePreventivate===0&&oreEffettive===0&&<div style={{fontSize:12,color:"var(--text3)",textAlign:"center",marginTop:8}}>Nessun dato per oggi</div>}
       </div>
-
-      {/* Tipologia interventi */}
       {tipiArr.length>0&&(
         <div className="dash-widget">
           <div className="dash-widget-title"><Icon name="list" size={13} color="var(--accent)"/> Tipologia interventi (ultimi 30)</div>
-          <div className="bar-chart" style={{height:90}}>
-            {tipiArr.map(([k,v],i)=>(
-              <div key={i} className="bar-col">
-                <div className="bar-wrap">
-                  <div className="bar" style={{height:`${(v/tipiArr[0][1])*100}%`,background:tipiColors[i]}}/>
-                </div>
-                <div className="bar-lbl" style={{fontSize:8}}>{k}<br/>{v}x</div>
-              </div>
-            ))}
-          </div>
+          <div className="bar-chart" style={{height:90}}>{tipiArr.map(([k,v],i)=><div key={i} className="bar-col"><div className="bar-wrap"><div className="bar" style={{height:`${(v/tipiArr[0][1])*100}%`,background:tipiColors[i]}}/></div><div className="bar-lbl" style={{fontSize:8}}>{k}<br/>{v}x</div></div>)}</div>
         </div>
       )}
-
-      {/* Scadenze */}
       {scadenzeVicine.length>0&&(
         <div className="dash-widget">
           <div className="dash-widget-title"><Icon name="warning" size={13} color="var(--warning)"/> Scadenze entro 30 giorni</div>
@@ -692,19 +557,10 @@ function AdminDashboard({users,records,notifications,whistleblowing,scadenze,onS
             const d=new Date(s.scadenza);
             const diff=Math.round((d-oggi)/(1000*60*60*24));
             const col=diff<=7?"var(--danger)":diff<=14?"var(--warning)":"var(--text2)";
-            return (
-              <div key={i} className="scadenza-item">
-                <div>
-                  <div style={{fontSize:13,fontWeight:600}}>{s.nome}</div>
-                  <div style={{fontSize:11,color:"var(--text2)"}}>{s.descrizione} · {s.tipo==="patente"?"Patente/Attestato":"Mezzo"}</div>
-                </div>
-                <div style={{fontSize:12,fontWeight:700,color:col}}>{diff===0?"Oggi":diff+"gg"}</div>
-              </div>
-            );
+            return <div key={i} className="scadenza-item"><div><div style={{fontSize:13,fontWeight:600}}>{s.nome}</div><div style={{fontSize:11,color:"var(--text2)"}}>{s.descrizione}</div></div><div style={{fontSize:12,fontWeight:700,color:col}}>{diff===0?"Oggi":diff+"gg"}</div></div>;
           })}
         </div>
       )}
-
       <div className="scroll-pad"/>
     </div>
   );
@@ -718,11 +574,7 @@ function HomeScreen({user,records,mezzoAttivo,onCambioMezzo,onNewRecord}) {
   const rOggi=myRecords.filter(r=>r.data===tDay);
   const rMese=myRecords.filter(r=>r.data.startsWith(mese));
   const totOggi=rOggi.reduce((s,r)=>s+calcOre(r.oraInizio,r.oraFine).totaleMin,0);
-  const strMese=(()=>{
-    const pg={};
-    rMese.forEach(r=>{if(!pg[r.data])pg[r.data]=0;pg[r.data]+=calcOre(r.oraInizio,r.oraFine).totaleMin;});
-    return Object.values(pg).reduce((s,m)=>s+Math.floor(Math.max(0,m-480)/60),0);
-  })();
+  const strMese=(()=>{const pg={};rMese.forEach(r=>{if(!pg[r.data])pg[r.data]=0;pg[r.data]+=calcOre(r.oraInizio,r.oraFine).totaleMin;});return Object.values(pg).reduce((s,m)=>s+Math.floor(Math.max(0,m-480)/60),0);})();
   const targa=mezzoAttivo?mezzoAttivo.split(" - ")[0]:"—";
   const recent=[...myRecords].sort((a,b)=>b.id-a.id).slice(0,3);
   return (
@@ -734,9 +586,7 @@ function HomeScreen({user,records,mezzoAttivo,onCambioMezzo,onNewRecord}) {
       <div className="mezzo-card">
         <div className="mezzo-icon"><Icon name="truck" size={20} color="var(--accent)"/></div>
         <div className="mezzo-info"><div className="mezzo-lbl">Mezzo attivo</div><div className="mezzo-targa">{targa}</div></div>
-        <select className="mezzo-sel" value={mezzoAttivo} onChange={e=>onCambioMezzo(e.target.value)}>
-          {MEZZI.map(m=><option key={m.id} value={m.targa+" - "+m.tipo}>{m.targa}</option>)}
-        </select>
+        <select className="mezzo-sel" value={mezzoAttivo} onChange={e=>onCambioMezzo(e.target.value)}>{MEZZI.map(m=><option key={m.id} value={m.targa+" - "+m.tipo}>{m.targa}</option>)}</select>
       </div>
       <div className="stats-row">
         <div className="stat-card"><div className="stat-value stat-accent">{fmt(totOggi)}</div><div className="stat-label">Ore oggi</div></div>
@@ -847,13 +697,12 @@ function RecordFormScreen({onSave,currentUser,mezzoAttivo,editRecord,onCancel,re
   const minGiaLavorati=(records||[]).filter(r=>r.userId===currentUser.id&&r.data===form.data&&r.id!==(editRecord?.id)&&!r.pianificato).reduce((s,r)=>s+calcOre(r.oraInizio,r.oraFine).totaleMin,0);
   const totaleGiornataMin=minGiaLavorati+calc.totaleMin;
   const straordinariGiornata=Math.floor(Math.max(0,totaleGiornataMin-480)/60);
-
   const captureGPS=()=>{
     if(!navigator.geolocation){setGpsErr("GPS non supportato");return;}
     setGpsErr("");setGpsL(true);
     navigator.geolocation.getCurrentPosition(
       pos=>{setGps({lat:pos.coords.latitude.toFixed(6),lng:pos.coords.longitude.toFixed(6)});setGpsL(false);showToast("Posizione acquisita");},
-      err=>{setGpsL(false);setGpsErr("Errore GPS");showToast("Errore GPS","error");},
+      ()=>{setGpsL(false);setGpsErr("Errore GPS");showToast("Errore GPS","error");},
       {enableHighAccuracy:true,timeout:10000,maximumAge:0}
     );
   };
@@ -1081,9 +930,7 @@ function ProfileScreen({user,records,onLogout,onChangePassword}) {
       {[["Username",user.username],["Ruolo",user.role],["ID","#"+user.id]].map(([l,v])=>(
         <div key={l} className="profile-item"><span className="profile-label">{l}</span><span className="profile-value">{v}</span></div>
       ))}
-      <div style={{marginTop:16}}>
-        <button className="btn btn-ghost" onClick={()=>setShowPwd(!showPwd)}><Icon name="lock" size={15}/> {showPwd?"Annulla":"Cambia password"}</button>
-      </div>
+      <div style={{marginTop:16}}><button className="btn btn-ghost" onClick={()=>setShowPwd(!showPwd)}><Icon name="lock" size={15}/> {showPwd?"Annulla":"Cambia password"}</button></div>
       {showPwd&&(
         <div style={{marginTop:12,padding:16,background:"var(--surface2)",borderRadius:"var(--radius)",border:"1px solid var(--border)"}}>
           {pwdErr&&<div className="error-msg">{pwdErr}</div>}
@@ -1100,115 +947,172 @@ function ProfileScreen({user,records,onLogout,onChangePassword}) {
   );
 }
 
+// ─── EDIT CAL EVENT MODAL ─────────────────────────────────────────────────────
+function EditCalEventModal({ev,users,userRole,onClose,onSave}) {
+  const dipendenti=users.filter(u=>u.role!=="Admin");
+  const [form,setForm]=useState({
+    userId:String(ev.userId),
+    cliente:ev.cliente||"",
+    cantiere:ev.cantiere||"",
+    oraInizio:ev.oraInizio||"08:00",
+    oraFine:ev.oraFine||"17:00",
+    note:ev.note||ev.nota||""
+  });
+  const handle=()=>{
+    if(!form.cliente.trim()){showToast("Inserisci il cliente","error");return;}
+    onSave({...ev,...form,userId:Number(form.userId)});
+  };
+  return (
+    <div className="overlay-center" onClick={onClose}>
+      <div className="modal-center" onClick={e=>e.stopPropagation()}>
+        <div style={{fontWeight:700,fontSize:15,marginBottom:14}}>✏️ Modifica — {ev.data}</div>
+        {userRole==="Admin"&&(
+          <Field label="Dipendente">
+            <select className="input" value={form.userId} onChange={e=>setForm(f=>({...f,userId:e.target.value}))}>
+              {dipendenti.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+          </Field>
+        )}
+        <Field label="Cliente" required><input className="input" value={form.cliente} onChange={e=>setForm(f=>({...f,cliente:e.target.value}))}/></Field>
+        <Field label="Cantiere"><input className="input" value={form.cantiere} onChange={e=>setForm(f=>({...f,cantiere:e.target.value}))}/></Field>
+        <div className="row-2">
+          <Field label="Inizio"><input type="time" className="input" value={form.oraInizio} onChange={e=>setForm(f=>({...f,oraInizio:e.target.value}))}/></Field>
+          <Field label="Fine"><input type="time" className="input" value={form.oraFine} onChange={e=>setForm(f=>({...f,oraFine:e.target.value}))}/></Field>
+        </div>
+        <Field label="Note"><textarea className="input" rows={2} value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))}/></Field>
+        <div className="row-2">
+          <button className="btn btn-ghost" onClick={onClose}>Annulla</button>
+          <button className="btn btn-primary" onClick={handle}><Icon name="check" size={14}/> Salva</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── CALENDAR ─────────────────────────────────────────────────────────────────
-function CalendarScreen({records,users,user,onAddEvent}) {
-  const [cursor,setCursor]=useState(new Date());
-  const [selectedEvent,setSelectedEvent]=useState(null);
-  const [editingEvent,setEditingEvent]=useState(null);
+function CalendarScreen({records,users,user,onAddEvent,onDeleteEvent,onEditEvent}) {
+  const [view,setView]        = useState("month");
+  const [cursor,setCursor]    = useState(new Date());
+  const [selectedEv,setSelEv] = useState(null);
+  const [editingEv,setEditEv] = useState(null);
+
   const MESI=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
   const GIORNI=["Lu","Ma","Me","Gi","Ve","Sa","Do"];
-  const getUserColor=uid=>(users.find(u=>u.id===uid)||{}).color||"#8892a4";
-  const getUserName=uid=>(users.find(u=>u.id===uid)||{}).name||"?";
-  const buildMonthDays=()=>{
-    const y=cursor.getFullYear(),m=cursor.getMonth();
-    const first=new Date(y,m,1);
-    const startDow=(first.getDay()+6)%7;
-    const days=[];
-    for(let i=0;i<startDow;i++){const d=new Date(y,m,1-startDow+i);days.push({date:d,cur:false});}
-    const tot=new Date(y,m+1,0).getDate();
-    for(let i=1;i<=tot;i++) days.push({date:new Date(y,m,i),cur:true});
-    while(days.length%7!==0){const l=days[days.length-1].date;days.push({date:new Date(l.getTime()+86400000),cur:false});}
-    return days;
-  };
-  const getEventsForDate=d=>{
+  const getColor=uid=>(users.find(u=>u.id===uid)||{}).color||"#8892a4";
+  const getName=uid=>(users.find(u=>u.id===uid)||{}).name||"?";
+  const todayStr=today();
+
+  const eventsFor=d=>{
     const ds=d.toISOString().slice(0,10);
     return records.filter(r=>r.data===ds&&(user.role==="Admin"||r.userId===user.id));
   };
-  const buildWeekDays=()=>{
-    const d=new Date(cursor);
-    const dow=(d.getDay()+6)%7;
-    const mon=new Date(d);mon.setDate(d.getDate()-dow);
-    return Array.from({length:7},(_,i)=>{const day=new Date(mon);day.setDate(mon.getDate()+i);return day;});
+  const buildMonth=()=>{
+    const y=cursor.getFullYear(),m=cursor.getMonth();
+    const startDow=(new Date(y,m,1).getDay()+6)%7;
+    const days=[];
+    for(let i=0;i<startDow;i++) days.push({date:new Date(y,m,1-startDow+i),cur:false});
+    for(let i=1;i<=new Date(y,m+1,0).getDate();i++) days.push({date:new Date(y,m,i),cur:true});
+    while(days.length%7!==0){const l=days[days.length-1].date;days.push({date:new Date(l.getTime()+86400000),cur:false});}
+    return days;
   };
-  const prevPeriod=()=>{const d=new Date(cursor);view==="month"?d.setMonth(d.getMonth()-1):d.setDate(d.getDate()-7);setCursor(d);};
-  const nextPeriod=()=>{const d=new Date(cursor);view==="month"?d.setMonth(d.getMonth()+1):d.setDate(d.getDate()+7);setCursor(d);};
-  const todayStr=today();
+  const buildWeek=()=>{
+    const d=new Date(cursor),dow=(d.getDay()+6)%7,mon=new Date(d);
+    mon.setDate(d.getDate()-dow);
+    return Array.from({length:7},(_,i)=>{const x=new Date(mon);x.setDate(mon.getDate()+i);return x;});
+  };
+  const prev=()=>{const d=new Date(cursor);view==="month"?d.setMonth(d.getMonth()-1):d.setDate(d.getDate()-7);setCursor(d);};
+  const next=()=>{const d=new Date(cursor);view==="month"?d.setMonth(d.getMonth()+1):d.setDate(d.getDate()+7);setCursor(d);};
+  const canEdit=ev=>user.role==="Admin"||ev.userId===user.id;
 
-  // Modal dettaglio evento
-  const EventDetailModal=({ev,onClose})=>{
-    const u=users.find(x=>x.id===ev.userId);
-    const canEdit=user.role==="Admin"||(ev.userId===user.id);
-    return (
-      <div className="overlay-center" onClick={onClose}>
-        <div className="modal-center" onClick={e=>e.stopPropagation()}>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-            <div style={{width:10,height:10,borderRadius:"50%",background:getUserColor(ev.userId),flexShrink:0}}/>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:700,fontSize:15}}>{ev.cliente||"Lavoro"}</div>
-              <div style={{fontSize:12,color:"var(--text2)"}}>{ev.data} · {ev.oraInizio}–{ev.oraFine}</div>
-            </div>
-          </div>
-          {[["Dipendente",u?.name],["Cantiere",ev.cantiere],["Cliente",ev.cliente],["Mezzo",ev.mezzo],["Note",ev.note||ev.nota]].map(([l,v])=>v?<div key={l} className="detail-row"><span className="detail-label">{l}</span><span className="detail-value">{v}</span></div>:null)}
-          {ev.pianificato&&<div style={{marginTop:10,fontSize:11,background:"rgba(9,132,227,.1)",border:"1px solid rgba(9,132,227,.2)",borderRadius:6,padding:"6px 10px",color:"var(--accent2)"}}>📅 Lavoro pianificato dall'admin</div>}
-          {canEdit&&<div style={{display:"flex",gap:8,marginTop:16}}>
-            <button className="btn btn-ghost btn-sm" style={{flex:1}} onClick={()=>{setEditingEvent(ev);onClose();}}><Icon name="edit" size={13}/> Modifica</button>
-            <button className="btn btn-danger btn-sm" style={{flex:1}} onClick={()=>{if(window.confirm("Eliminare questo lavoro?"))onAddEvent(null,ev.id);onClose();}}><Icon name="trash" size={13}/> Elimina</button>
-          </div>}
-          <button className="btn btn-ghost" style={{marginTop:8}} onClick={onClose}>Chiudi</button>
-        </div>
-      </div>
-    );
-  };
-
-  // Modal modifica evento
-  const EditEventModal=({ev,onClose})=>{
-    const dipendenti=users.filter(u=>u.role!=="Admin");
-    const [form,setForm]=useState({userId:String(ev.userId),cliente:ev.cliente||"",cantiere:ev.cantiere||"",oraInizio:ev.oraInizio||"08:00",oraFine:ev.oraFine||"17:00",note:ev.note||ev.nota||""});
-    const handleSave=()=>{
-      if(!form.cliente){showToast("Inserisci il cliente","error");return;}
-      onAddEvent({...ev,...form,userId:Number(form.userId)},null,true);
-      onClose();showToast("Lavoro aggiornato!");
-    };
-    return (
-      <div className="overlay-center" onClick={onClose}>
-        <div className="modal-center" onClick={e=>e.stopPropagation()}>
-          <div style={{fontWeight:700,fontSize:15,marginBottom:14}}>✏️ Modifica lavoro — {ev.data}</div>
-          {user.role==="Admin"&&<Field label="Dipendente"><select className="input" value={form.userId} onChange={e=>setForm(f=>({...f,userId:e.target.value}))}>{dipendenti.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select></Field>}
-          <Field label="Cliente" required><input className="input" value={form.cliente} onChange={e=>setForm(f=>({...f,cliente:e.target.value}))}/></Field>
-          <Field label="Cantiere"><input className="input" value={form.cantiere} onChange={e=>setForm(f=>({...f,cantiere:e.target.value}))}/></Field>
-          <div className="row-2">
-            <Field label="Inizio"><input type="time" className="input" value={form.oraInizio} onChange={e=>setForm(f=>({...f,oraInizio:e.target.value}))}/></Field>
-            <Field label="Fine"><input type="time" className="input" value={form.oraFine} onChange={e=>setForm(f=>({...f,oraFine:e.target.value}))}/></Field>
-          </div>
-          <Field label="Note"><textarea className="input" rows={2} value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))}/></Field>
-          <div className="row-2"><button className="btn btn-ghost" onClick={onClose}>Annulla</button><button className="btn btn-primary" onClick={handleSave}><Icon name="check" size={14}/> Salva</button></div>
-        </div>
-      </div>
-    );
-  };
   return (
     <div className="content">
+      {/* MODAL DETTAGLIO */}
+      {selectedEv&&(
+        <div className="overlay-center" onClick={()=>setSelEv(null)}>
+          <div className="modal-center" onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+              <div style={{width:12,height:12,borderRadius:"50%",background:getColor(selectedEv.userId),flexShrink:0}}/>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:16}}>{selectedEv.cliente||"Lavoro"}</div>
+                <div style={{fontSize:12,color:"var(--text2)"}}>{selectedEv.data} · {selectedEv.oraInizio||"—"}–{selectedEv.oraFine||"—"}</div>
+              </div>
+            </div>
+            {[["Dipendente",getName(selectedEv.userId)],["Cantiere",selectedEv.cantiere],["Mezzo",selectedEv.mezzo],["Note",selectedEv.note||selectedEv.nota]].map(([l,v])=>v?(
+              <div key={l} className="detail-row"><span className="detail-label">{l}</span><span className="detail-value">{v}</span></div>
+            ):null)}
+            {selectedEv.pianificato&&<div style={{marginTop:10,fontSize:11,background:"rgba(9,132,227,.1)",border:"1px solid rgba(9,132,227,.2)",borderRadius:6,padding:"6px 10px",color:"var(--accent2)"}}>📅 Lavoro pianificato dall'admin</div>}
+            {canEdit(selectedEv)&&(
+              <div style={{display:"flex",gap:8,marginTop:14}}>
+                <button className="btn btn-ghost btn-sm" style={{flex:1}} onClick={()=>{setEditEv(selectedEv);setSelEv(null);}}>
+                  <Icon name="edit" size={13}/> Modifica
+                </button>
+                <button className="btn btn-danger btn-sm" style={{flex:1}} onClick={()=>{
+                  if(window.confirm("Eliminare questo lavoro?")){onDeleteEvent(selectedEv.id);setSelEv(null);}
+                }}>
+                  <Icon name="trash" size={13}/> Elimina
+                </button>
+              </div>
+            )}
+            <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>setSelEv(null)}>Chiudi</button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL MODIFICA */}
+      {editingEv&&(
+        <EditCalEventModal
+          ev={editingEv}
+          users={users}
+          userRole={user.role}
+          onClose={()=>setEditEv(null)}
+          onSave={updated=>{onEditEvent(updated);setEditEv(null);showToast("Lavoro aggiornato!");}}
+        />
+      )}
+
+      {/* HEADER */}
       <div className="cal-header">
-        <button className="btn btn-ghost btn-sm" style={{width:"auto",padding:"8px"}} onClick={prevPeriod}><Icon name="chevLeft" size={16}/></button>
-        <div className="cal-month">{view==="month"?MESI[cursor.getMonth()]+" "+cursor.getFullYear():buildWeekDays()[0].toLocaleDateString("it-IT",{day:"numeric",month:"short"})+" – "+buildWeekDays()[6].toLocaleDateString("it-IT",{day:"numeric",month:"short",year:"numeric"})}</div>
-        <button className="btn btn-ghost btn-sm" style={{width:"auto",padding:"8px"}} onClick={nextPeriod}><Icon name="chevRight" size={16}/></button>
+        <button className="btn btn-ghost btn-sm" style={{width:"auto",padding:"8px"}} onClick={prev}><Icon name="chevLeft" size={16}/></button>
+        <div className="cal-month">
+          {view==="month"
+            ? MESI[cursor.getMonth()]+" "+cursor.getFullYear()
+            : buildWeek()[0].toLocaleDateString("it-IT",{day:"numeric",month:"short"})+" – "+buildWeek()[6].toLocaleDateString("it-IT",{day:"numeric",month:"short",year:"numeric"})
+          }
+        </div>
+        <button className="btn btn-ghost btn-sm" style={{width:"auto",padding:"8px"}} onClick={next}><Icon name="chevRight" size={16}/></button>
       </div>
       <div className="cal-toggle" style={{marginBottom:14}}>
         <button className={"cal-toggle-btn"+(view==="month"?" active":"")} onClick={()=>setView("month")}>Mese</button>
         <button className={"cal-toggle-btn"+(view==="week"?" active":"")} onClick={()=>setView("week")}>Settimana</button>
       </div>
-      {user.role==="Admin"&&<div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>{users.filter(u=>u.role!=="Admin").map(u=><div key={u.id} style={{display:"flex",alignItems:"center",gap:5,fontSize:11,fontWeight:600}}><div style={{width:10,height:10,borderRadius:3,background:u.color}}/>{u.name.split(" ")[0]}</div>)}</div>}
+      {user.role==="Admin"&&(
+        <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>
+          {users.filter(u=>u.role!=="Admin").map(u=>(
+            <div key={u.id} style={{display:"flex",alignItems:"center",gap:5,fontSize:11,fontWeight:600}}>
+              <div style={{width:10,height:10,borderRadius:3,background:u.color}}/>{u.name.split(" ")[0]}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* VISTA MESE */}
       {view==="month"&&(
         <>
           <div className="cal-grid" style={{marginBottom:4}}>{GIORNI.map(g=><div key={g} className="cal-dow">{g}</div>)}</div>
           <div className="cal-grid">
-            {buildMonthDays().map((item,i)=>{
-              const evs=getEventsForDate(item.date);
+            {buildMonth().map((item,i)=>{
+              const evs=eventsFor(item.date);
               const isToday=item.date.toISOString().slice(0,10)===todayStr;
               return (
-                <div key={i} className={"cal-day"+(item.cur?"":" other-month")+(isToday?" today":"")} onClick={()=>user.role==="Admin"&&onAddEvent(item.date)}>
+                <div key={i} className={"cal-day"+(item.cur?"":" other-month")+(isToday?" today":"")}
+                  onClick={()=>user.role==="Admin"&&onAddEvent(item.date)}>
                   <div className="cal-day-num">{item.date.getDate()}</div>
-                  {evs.slice(0,2).map((ev,j)=><div key={j} className="cal-event" style={{background:getUserColor(ev.userId),cursor:"pointer"}} onClick={e=>{e.stopPropagation();setSelectedEvent(ev);}}>{user.role==="Admin"?getUserName(ev.userId).split(" ")[0]:ev.cliente||"Lavoro"}</div>)}
+                  {evs.slice(0,2).map((ev,j)=>(
+                    <div key={j} className="cal-event"
+                      style={{background:getColor(ev.userId),cursor:"pointer"}}
+                      onClick={e=>{e.stopPropagation();setSelEv(ev);}}>
+                      {user.role==="Admin"?getName(ev.userId).split(" ")[0]:ev.cliente||"Lavoro"}
+                    </div>
+                  ))}
                   {evs.length>2&&<div style={{fontSize:9,color:"var(--text3)"}}>+{evs.length-2}</div>}
                 </div>
               );
@@ -1216,27 +1120,43 @@ function CalendarScreen({records,users,user,onAddEvent}) {
           </div>
         </>
       )}
+
+      {/* VISTA SETTIMANA */}
       {view==="week"&&(
         <div className="week-grid">
-          {buildWeekDays().map((day,i)=>{
+          {buildWeek().map((day,i)=>{
             const ds=day.toISOString().slice(0,10);
-            const evs=getEventsForDate(day);
+            const evs=eventsFor(day);
             const isToday=ds===todayStr;
             return (
               <div key={i} className="week-day-row">
                 <div className={"week-day-label"+(isToday?" today-lbl":"")}>
                   {day.toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"})}
                   {isToday&&<span style={{fontSize:10,background:"var(--accent)",color:"white",borderRadius:4,padding:"1px 5px"}}>oggi</span>}
-                  {user.role==="Admin"&&<button className="btn btn-sm btn-ghost" style={{width:"auto",padding:"3px 8px",marginLeft:"auto",fontSize:11}} onClick={()=>onAddEvent(day)}><Icon name="plus" size={11}/></button>}
+                  {user.role==="Admin"&&(
+                    <button className="btn btn-sm btn-ghost" style={{width:"auto",padding:"3px 8px",marginLeft:"auto",fontSize:11}}
+                      onClick={()=>onAddEvent(day)}>
+                      <Icon name="plus" size={11}/>
+                    </button>
+                  )}
                 </div>
                 {evs.length===0&&<div style={{fontSize:12,color:"var(--text3)",padding:"4px 0"}}>Nessun lavoro</div>}
                 {evs.map((ev,j)=>(
-                  <div key={j} className="week-event" style={{background:getUserColor(ev.userId)+"22"}} onClick={()=>setSelectedEvent(ev)}>
-                    <div className="week-event-dot" style={{background:getUserColor(ev.userId)}}/>
+                  <div key={j} className="week-event" style={{background:getColor(ev.userId)+"22",cursor:"pointer"}}
+                    onClick={()=>setSelEv(ev)}>
+                    <div className="week-event-dot" style={{background:getColor(ev.userId)}}/>
                     <div className="week-event-info">
-                      <div className="week-event-title" style={{color:getUserColor(ev.userId)}}>{user.role==="Admin"?getUserName(ev.userId)+" – ":""}{ev.cliente||"Lavoro"}</div>
-                      <div className="week-event-sub">{ev.oraInizio}–{ev.oraFine} · {ev.cantiere||""}</div>
+                      <div className="week-event-title" style={{color:getColor(ev.userId)}}>
+                        {user.role==="Admin"?getName(ev.userId)+" – ":""}{ev.cliente||"Lavoro"}
+                      </div>
+                      <div className="week-event-sub">{ev.oraInizio||"—"}–{ev.oraFine||"—"} · {ev.cantiere||""}</div>
                     </div>
+                    {canEdit(ev)&&(
+                      <div style={{display:"flex",gap:4,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+                        <button className="btn btn-sm btn-ghost" style={{width:"auto",padding:"4px 6px"}} onClick={()=>setEditEv(ev)}><Icon name="edit" size={11}/></button>
+                        <button className="btn btn-sm btn-danger" style={{width:"auto",padding:"4px 6px"}} onClick={()=>{if(window.confirm("Eliminare?"))onDeleteEvent(ev.id);}}><Icon name="trash" size={11}/></button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1288,7 +1208,6 @@ function AdminNotifiche({notifications,setNotifications,users}) {
       </div>
       {showForm&&(
         <div style={{background:"var(--surface2)",border:"1px solid var(--border)",borderRadius:"var(--radius)",padding:16,marginBottom:16}}>
-          <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>Nuovo avviso</div>
           {err&&<div className="error-msg">{err}</div>}
           <Field label="Tipo">
             <select className="input" value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>
@@ -1299,7 +1218,7 @@ function AdminNotifiche({notifications,setNotifications,users}) {
           <Field label="Titolo"><input className="input" placeholder="Es. Aggiornamento procedure" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))}/></Field>
           <Field label="Testo"><textarea className="input" rows={4} placeholder="Testo dell'avviso..." value={form.body} onChange={e=>setForm(f=>({...f,body:e.target.value}))}/></Field>
           <div style={{background:form.type==="mandatory"?"rgba(245,158,11,.08)":"rgba(0,184,148,.08)",border:`1px solid ${form.type==="mandatory"?"rgba(245,158,11,.3)":"rgba(0,184,148,.3)"}`,borderRadius:8,padding:10,marginBottom:12,fontSize:12,color:"var(--text2)"}}>
-            {form.type==="mandatory"?"⚠️ Il dipendente dovrà premere 'Confermo lettura'. Apparirà in popup al prossimo accesso.":"📢 Appare nella sezione notifiche. Nessuna conferma richiesta."}
+            {form.type==="mandatory"?"⚠️ Il dipendente dovrà premere Confermo lettura. Apparirà in popup al prossimo accesso.":"📢 Appare nella sezione notifiche. Nessuna conferma richiesta."}
           </div>
           <div className="row-2"><button className="btn btn-ghost" onClick={()=>setShowForm(false)}>Annulla</button><button className="btn btn-primary" onClick={handleSend}><Icon name="send" size={14}/> Invia</button></div>
         </div>
@@ -1307,7 +1226,7 @@ function AdminNotifiche({notifications,setNotifications,users}) {
       {notifications.map(n=>{
         const total=dipendenti.length;const letti=n.read.length;
         return (
-          <div key={n.id} className={"notif-card "+n.type} style={{position:"relative"}}>
+          <div key={n.id} className={"notif-card "+n.type}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
               <span className={"notif-type "+n.type}>{n.type==="mandatory"?<><Icon name="alert" size={10}/> Obbligatorio</>:<><Icon name="info" size={10}/> Info</>}</span>
               <button className="btn btn-danger btn-sm" style={{width:"auto",padding:"3px 8px"}} onClick={()=>{if(window.confirm("Eliminare?"))setNotifications(ns=>ns.filter(x=>x.id!==n.id));}}><Icon name="trash" size={11}/></button>
@@ -1318,9 +1237,7 @@ function AdminNotifiche({notifications,setNotifications,users}) {
             {n.type==="mandatory"&&(
               <div style={{marginTop:10}}>
                 <div style={{fontSize:11,fontWeight:700,color:"var(--text2)",marginBottom:6,textTransform:"uppercase",letterSpacing:".5px"}}>Conferme ({letti}/{total})</div>
-                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-                  {dipendenti.map(u=><span key={u.id} className={"read-chip "+(n.read.includes(u.id)?"yes":"no")}>{n.read.includes(u.id)?<Icon name="check" size={10}/>:<Icon name="x" size={10}/>} {u.name.split(" ")[0]}</span>)}
-                </div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>{dipendenti.map(u=><span key={u.id} className={"read-chip "+(n.read.includes(u.id)?"yes":"no")}>{n.read.includes(u.id)?<Icon name="check" size={10}/>:<Icon name="x" size={10}/>} {u.name.split(" ")[0]}</span>)}</div>
               </div>
             )}
           </div>
@@ -1375,7 +1292,7 @@ function AdminUtenti({users,setUsers,records}) {
               {u.firstLogin&&<div style={{fontSize:10,color:"var(--warning)",marginTop:2}}>⚠️ Non ha ancora cambiato la password</div>}
             </div>
             <div style={{display:"flex",gap:6}}>
-              <button className="btn btn-sm btn-ghost" style={{width:"auto",padding:"5px 8px"}} title="Reset password" onClick={()=>{if(window.confirm("Reimpostare la password di "+u.name+" a '1234'?"))setUsers(us=>us.map(x=>x.id===u.id?{...x,password:"1234",firstLogin:true}:x));showToast("Password reimpostata");}}><Icon name="key" size={13}/></button>
+              <button className="btn btn-sm btn-ghost" style={{width:"auto",padding:"5px 8px"}} onClick={()=>{if(window.confirm("Reimpostare la password di "+u.name+" a 1234?"))setUsers(us=>us.map(x=>x.id===u.id?{...x,password:"1234",firstLogin:true}:x));showToast("Password reimpostata");}}><Icon name="key" size={13}/></button>
               <button className="btn btn-sm btn-danger" style={{width:"auto",padding:"5px 8px"}} onClick={()=>{if(window.confirm("Eliminare "+u.name+"?"))setUsers(us=>us.filter(x=>x.id!==u.id));}}><Icon name="trash" size={13}/></button>
             </div>
           </div>
@@ -1405,9 +1322,9 @@ function AdminScadenze({scadenze,setScadenze,users}) {
               <option value="mezzo">Revisione / Assicurazione mezzo</option>
             </select>
           </Field>
-          {form.tipo==="patente"?
-            <Field label="Dipendente"><select className="input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))}><option value="">Seleziona...</option>{dipendenti.map(u=><option key={u.id} value={u.name}>{u.name}</option>)}</select></Field>:
-            <Field label="Targa mezzo"><select className="input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))}><option value="">Seleziona...</option>{MEZZI.map(m=><option key={m.id} value={m.targa}>{m.targa} - {m.tipo}</option>)}</select></Field>
+          {form.tipo==="patente"
+            ?<Field label="Dipendente"><select className="input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))}><option value="">Seleziona...</option>{dipendenti.map(u=><option key={u.id} value={u.name}>{u.name}</option>)}</select></Field>
+            :<Field label="Targa mezzo"><select className="input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))}><option value="">Seleziona...</option>{MEZZI.map(m=><option key={m.id} value={m.targa}>{m.targa} - {m.tipo}</option>)}</select></Field>
           }
           <Field label="Descrizione"><input className="input" placeholder={form.tipo==="patente"?"Es. Patente C, Attestato PES...":"Es. Revisione periodica, RCA..."} value={form.descrizione} onChange={e=>setForm(f=>({...f,descrizione:e.target.value}))}/></Field>
           <Field label="Data scadenza"><input type="date" className="input" value={form.scadenza} onChange={e=>setForm(f=>({...f,scadenza:e.target.value}))}/></Field>
@@ -1507,10 +1424,11 @@ function QuickNotifModal({onClose,onSend}) {
   );
 }
 
-// ─── APP ROOT ─────────────────────────────────────────────────────────────────
+// ─── STORAGE ──────────────────────────────────────────────────────────────────
 function lsGet(k,def){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):def;}catch{return def;}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 
+// ─── APP ROOT ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [users,setUsers]               = useState(()=>lsGet("rgr_users",INITIAL_USERS));
   const [user,setUser]                 = useState(()=>lsGet("rgr_session",null));
@@ -1528,7 +1446,6 @@ export default function App() {
   const [whistleblowing,setWB]         = useState(()=>lsGet("rgr_wb",[]));
   const [scadenze,setScadenze]         = useState(()=>lsGet("rgr_scadenze",INITIAL_SCADENZE));
 
-  // Persistenza automatica
   useEffect(()=>lsSet("rgr_users",users),[users]);
   useEffect(()=>lsSet("rgr_records",records),[records]);
   useEffect(()=>lsSet("rgr_notifs",notifs),[notifs]);
@@ -1559,7 +1476,7 @@ export default function App() {
   };
   const handleChangePassword=newPwd=>{
     setUsers(us=>us.map(u=>u.id===currentUser.id?{...u,password:newPwd,firstLogin:false}:u));
-    if(user) { const updated={...user,password:newPwd,firstLogin:false}; setUser(updated); lsSet("rgr_session",updated); }
+    if(user){const updated={...user,password:newPwd,firstLogin:false};setUser(updated);lsSet("rgr_session",updated);}
   };
   const handleQuickNotif=form=>{
     const n={id:Date.now(),title:form.title,body:form.body,type:form.type,date:today(),read:[],createdBy:"Admin"};
@@ -1582,7 +1499,6 @@ export default function App() {
 
   const titles={home:isAdmin?"Dashboard":"RGR Elettra Hub",list:"Storico Lavori",new:"Nuovo Lavoro",notifs:"Notifiche",profile:"Profilo",whistleblowing:"Segnalazioni",cal:"Calendario",admin:"Pannello Admin"};
 
-  // LOGIN
   if(!user) return (
     <>
       <style>{css}</style>
@@ -1604,7 +1520,6 @@ export default function App() {
     </>
   );
 
-  // Cambio password obbligatorio anche per admin
   if(currentUser?.firstLogin) return (
     <>
       <style>{css}</style>
@@ -1618,8 +1533,7 @@ export default function App() {
       <style>{css}</style>
       <Toast/>
       {showMezzoPopup&&!isAdmin&&(
-        <MezzoPopup user={currentUser} ultimoMezzo={mezzoAttivo}
-          onConfirm={m=>{handleCambioMezzo(m);setSMP(false);}}/>
+        <MezzoPopup user={currentUser} ultimoMezzo={mezzoAttivo} onConfirm={m=>{handleCambioMezzo(m);setSMP(false);}}/>
       )}
       {!showMezzoPopup&&mandatoryUnread&&screen!=="notifs"&&(
         <MandatoryNotifModal notif={mandatoryUnread} onConfirm={()=>{handleConfirmNotif(mandatoryUnread.id);showToast("Avviso confermato");}}/>
