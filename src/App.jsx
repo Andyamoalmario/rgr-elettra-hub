@@ -396,18 +396,50 @@ function MezzoPopup({user,ultimoMezzo,onConfirm}) {
 function AdminDashboard({users,records,notifications,whistleblowing,scadenze,onSetScreen,onQuickNotif}) {
   const tDay=today();
   const [search,setSearch]=useState("");
+  const [showSoloAttivi,setShowSoloAttivi]=useState(true);
+  const [filtroRuolo,setFiltroRuolo]=useState("");
+  const [filtroCantiere,setFiltroCantiere]=useState("");
+  const [filtroCliente,setFiltroCliente]=useState("");
   const dipendenti=users.filter(u=>u.role!=="Admin");
 
   // Chi è in cantiere oggi (ha un mezzo attivo)
   const inCantiere=dipendenti.filter(u=>u.mezzoOggi&&u.mezzoOggi.data===tDay);
 
-  // Lavori odierni pianificati nelle prossime 2h
+  // Cantieri e clienti unici dai lavori di oggi
+  const lavoriOggi=records.filter(r=>r.data===tDay&&!r.pianificato);
+  const cantieriOggi=[...new Set(lavoriOggi.map(r=>r.cantiere).filter(Boolean))];
+  const clientiOggi=[...new Set(lavoriOggi.map(r=>r.cliente).filter(Boolean))];
+  const ruoliUnici=[...new Set(dipendenti.map(u=>u.role).filter(Boolean))];
+
+  // Dipendenti filtrati
+  const dipendentiFiltrati=dipendenti.filter(u=>{
+    if(showSoloAttivi&&!(u.mezzoOggi&&u.mezzoOggi.data===tDay)) return false;
+    if(filtroRuolo&&u.role!==filtroRuolo) return false;
+    if(filtroCantiere){
+      const hasCantiere=lavoriOggi.some(r=>r.userId===u.id&&r.cantiere===filtroCantiere);
+      if(!hasCantiere) return false;
+    }
+    if(filtroCliente){
+      const hasCliente=lavoriOggi.some(r=>r.userId===u.id&&r.cliente===filtroCliente);
+      if(!hasCliente) return false;
+    }
+    return true;
+  });
+
+  const activeFiltri=[filtroRuolo,filtroCantiere,filtroCliente].filter(Boolean).length;
+
+  // Prossimi lavori: tutti i lavori di oggi non ancora terminati
   const nowMin=new Date().getHours()*60+new Date().getMinutes();
   const prossimi=records.filter(r=>{
     if(r.data!==tDay) return false;
-    const [h,m]=(r.oraInizio||"00:00").split(":").map(Number);
-    const startMin=h*60+m;
-    return startMin>=nowMin&&startMin<=nowMin+120;
+    // Prendi orario fine (se non c'è, considera il lavoro ancora attivo)
+    const [hF,mF]=(r.oraFine||"23:59").split(":").map(Number);
+    const endMin=hF*60+mF;
+    return endMin>nowMin; // mostra solo se non ancora terminato
+  }).sort((a,b)=>{
+    const [hA,mA]=(a.oraInizio||"00:00").split(":").map(Number);
+    const [hB,mB]=(b.oraInizio||"00:00").split(":").map(Number);
+    return (hA*60+mA)-(hB*60+mB);
   });
 
   // Ore preventivate (pianificato:true) vs effettive per oggi
@@ -437,8 +469,8 @@ function AdminDashboard({users,records,notifications,whistleblowing,scadenze,onS
     const d=new Date(s.scadenza); return d>=oggi&&d<=fra30;
   }).sort((a,b)=>new Date(a.scadenza)-new Date(b.scadenza));
 
-  // Mappa: ultimi GPS per dipendente in cantiere oggi
-  const mapPins=inCantiere.map(u=>{
+  // Mappa: ultimi GPS per dipendente filtrato oggi
+  const mapPins=dipendentiFiltrati.filter(u=>u.mezzoOggi&&u.mezzoOggi.data===tDay).map(u=>{
     const last=records.filter(r=>r.userId===u.id&&r.gps&&r.data===tDay).sort((a,b)=>b.id-a.id)[0];
     return last?{name:u.name.split(" ")[0],color:u.color,gps:last.gps}:null;
   }).filter(Boolean);
@@ -454,6 +486,13 @@ function AdminDashboard({users,records,notifications,whistleblowing,scadenze,onS
 
   return (
     <div className="content">
+      {selectedEvent&&<EventDetailModal ev={selectedEvent} onClose={()=>setSelectedEvent(null)}/>}
+      {editingEvent&&<EditEventModal ev={editingEvent} onClose={()=>setEditingEvent(null)}/>}
+      {/* Data e saluto */}
+      <div style={{marginBottom:16}}>
+        <h2 style={{fontSize:21,fontWeight:700}}>Dashboard 👋</h2>
+        <p style={{fontSize:13,color:"var(--text2)",marginTop:2}}>{new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</p>
+      </div>
       {/* Ricerca globale */}
       <div className="search-bar">
         <Icon name="search" size={16} color="var(--text3)"/>
@@ -504,22 +543,54 @@ function AdminDashboard({users,records,notifications,whistleblowing,scadenze,onS
 
       {/* Chi è in cantiere */}
       <div className="dash-widget">
-        <div className="dash-widget-title"><Icon name="hardhat" size={13} color="var(--accent)"/> In cantiere ora ({inCantiere.length}/{dipendenti.length})</div>
-        {inCantiere.length===0&&<div style={{fontSize:12,color:"var(--text3)"}}>Nessun dipendente in cantiere oggi</div>}
+        <div className="dash-widget-title"><Icon name="hardhat" size={13} color="var(--accent)"/> In cantiere ({inCantiere.length}/{dipendenti.length})</div>
+
+        {/* Toggle attivi/tutti */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+          <div style={{display:"flex",background:"var(--surface2)",borderRadius:8,padding:3,gap:2}}>
+            <button onClick={()=>setShowSoloAttivi(true)} style={{padding:"4px 10px",borderRadius:6,border:"none",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",background:showSoloAttivi?"var(--accent)":"transparent",color:showSoloAttivi?"white":"var(--text2)",transition:"all .2s"}}>Solo attivi</button>
+            <button onClick={()=>setShowSoloAttivi(false)} style={{padding:"4px 10px",borderRadius:6,border:"none",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",background:!showSoloAttivi?"var(--accent)":"transparent",color:!showSoloAttivi?"white":"var(--text2)",transition:"all .2s"}}>Tutti</button>
+          </div>
+          {activeFiltri>0&&<button onClick={()=>{setFiltroRuolo("");setFiltroCantiere("");setFiltroCliente("");}} style={{fontSize:11,color:"var(--danger)",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600}}>✕ Resetta filtri ({activeFiltri})</button>}
+        </div>
+
+        {/* Filtri a tendina */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:12}}>
+          <select className="input" style={{padding:"7px 8px",fontSize:11}} value={filtroRuolo} onChange={e=>setFiltroRuolo(e.target.value)}>
+            <option value="">Tutti i ruoli</option>
+            {ruoliUnici.map(r=><option key={r} value={r}>{r}</option>)}
+          </select>
+          <select className="input" style={{padding:"7px 8px",fontSize:11}} value={filtroCantiere} onChange={e=>setFiltroCantiere(e.target.value)}>
+            <option value="">Tutti i cantieri</option>
+            {cantieriOggi.map(c=><option key={c} value={c}>{c.length>15?c.slice(0,15)+"…":c}</option>)}
+          </select>
+          <select className="input" style={{padding:"7px 8px",fontSize:11}} value={filtroCliente} onChange={e=>setFiltroCliente(e.target.value)}>
+            <option value="">Tutti i clienti</option>
+            {clientiOggi.map(c=><option key={c} value={c}>{c.length>15?c.slice(0,15)+"…":c}</option>)}
+          </select>
+        </div>
+
+        {/* Risultati */}
+        <div style={{fontSize:11,color:"var(--text3)",marginBottom:8}}>{dipendentiFiltrati.length} dipendent{dipendentiFiltrati.length===1?"e":"i"} mostrat{dipendentiFiltrati.length===1?"o":"i"}</div>
+
+        {dipendentiFiltrati.length===0&&<div style={{fontSize:12,color:"var(--text3)",textAlign:"center",padding:"12px 0"}}>Nessun risultato con i filtri selezionati</div>}
+
         <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-          {inCantiere.map(u=>(
-            <div key={u.id} className="cantiere-chip" style={{background:u.color+"22",border:`1px solid ${u.color}44`}}>
-              <div style={{width:8,height:8,borderRadius:"50%",background:u.color}}/>
-              <span style={{color:u.color,fontSize:12}}>{u.name.split(" ")[0]}</span>
-              <span style={{fontSize:10,color:"var(--text3)"}}>· {u.mezzoOggi?.mezzo?.split(" - ")[0]||""}</span>
-            </div>
-          ))}
-          {dipendenti.filter(u=>!inCantiere.find(x=>x.id===u.id)).map(u=>(
-            <div key={u.id} className="cantiere-chip" style={{background:"var(--surface2)",border:"1px solid var(--border)"}}>
-              <div style={{width:8,height:8,borderRadius:"50%",background:"var(--text3)"}}/>
-              <span style={{color:"var(--text3)",fontSize:12}}>{u.name.split(" ")[0]}</span>
-            </div>
-          ))}
+          {dipendentiFiltrati.map(u=>{
+            const attivo=u.mezzoOggi&&u.mezzoOggi.data===tDay;
+            const lavoroOggi=lavoriOggi.find(r=>r.userId===u.id);
+            return (
+              <div key={u.id} className="cantiere-chip" style={{background:attivo?u.color+"22":"var(--surface2)",border:`1px solid ${attivo?u.color+"44":"var(--border)"}`,flexDirection:"column",alignItems:"flex-start",gap:2,padding:"7px 10px",minWidth:120}}>
+                <div style={{display:"flex",alignItems:"center",gap:5}}>
+                  <div style={{width:8,height:8,borderRadius:"50%",background:attivo?u.color:"var(--text3)",flexShrink:0}}/>
+                  <span style={{color:attivo?u.color:"var(--text3)",fontSize:12,fontWeight:600}}>{u.name.split(" ")[0]} {u.name.split(" ")[1]?.charAt(0)||""}.</span>
+                </div>
+                <div style={{fontSize:10,color:"var(--text3)",marginLeft:13}}>{u.role}</div>
+                {attivo&&u.mezzoOggi?.mezzo&&<div style={{fontSize:10,color:"var(--text2)",marginLeft:13}}>🚛 {u.mezzoOggi.mezzo.split(" - ")[0]}</div>}
+                {lavoroOggi&&<div style={{fontSize:10,color:"var(--text2)",marginLeft:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:110}}>📍 {lavoroOggi.cantiere||lavoroOggi.cliente||""}</div>}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -550,23 +621,31 @@ function AdminDashboard({users,records,notifications,whistleblowing,scadenze,onS
       </div>
 
       {/* Prossimi lavori */}
-      {prossimi.length>0&&(
-        <div className="dash-widget">
-          <div className="dash-widget-title"><Icon name="clock" size={13} color="var(--warning)"/> Prossime 2 ore</div>
-          {prossimi.map((r,i)=>{
-            const u=users.find(x=>x.id===r.userId);
-            return (
-              <div key={i} className="prossimo-item">
-                <div style={{width:8,height:8,borderRadius:"50%",background:u?.color||"var(--accent)",flexShrink:0}}/>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:12,fontWeight:600}}>{r.oraInizio} — {r.cliente||"Lavoro"}</div>
-                  <div style={{fontSize:11,color:"var(--text2)"}}>{u?.name||""} · {r.cantiere||""}</div>
-                </div>
+      <div className="dash-widget">
+        <div className="dash-widget-title"><Icon name="clock" size={13} color="var(--warning)"/> Prossimi lavori oggi ({prossimi.length})</div>
+        {prossimi.length===0&&<div style={{fontSize:12,color:"var(--text3)"}}>Nessun lavoro nelle prossime 4 ore</div>}
+        {prossimi.map((r,i)=>{
+          const u=users.find(x=>x.id===r.userId);
+          const [hS,mS]=(r.oraInizio||"00:00").split(":").map(Number);
+          const startMin=hS*60+mS;
+          const [hF2,mF2]=(r.oraFine||"23:59").split(":").map(Number);
+          const endMin=hF2*60+mF2;
+          const inCorso=startMin<=nowMin&&endMin>nowMin;
+          const nonIniziato=startMin>nowMin;
+          const diffMin=startMin-nowMin;
+          const diffLabel=inCorso?"🟢 In corso":diffMin<60?"tra "+diffMin+"min":"tra "+Math.floor(diffMin/60)+"h"+(diffMin%60?" "+diffMin%60+"m":"");
+          return (
+            <div key={i} className="prossimo-item">
+              <div style={{width:8,height:8,borderRadius:"50%",background:u?.color||"var(--accent)",flexShrink:0}}/>
+              <div style={{flex:1}}>
+                <div style={{fontSize:12,fontWeight:600}}>{r.oraInizio}–{r.oraFine} · {r.cliente||"Lavoro"}</div>
+                <div style={{fontSize:11,color:"var(--text2)"}}>{u?.name||""}{r.cantiere?" · "+r.cantiere:""}</div>
               </div>
-            );
-          })}
-        </div>
-      )}
+              <div style={{fontSize:11,fontWeight:700,color:inCorso?"var(--success)":"var(--warning)",whiteSpace:"nowrap"}}>{diffLabel}</div>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Grafico ore */}
       <div className="dash-widget">
@@ -1023,8 +1102,9 @@ function ProfileScreen({user,records,onLogout,onChangePassword}) {
 
 // ─── CALENDAR ─────────────────────────────────────────────────────────────────
 function CalendarScreen({records,users,user,onAddEvent}) {
-  const [view,setView]=useState("month");
   const [cursor,setCursor]=useState(new Date());
+  const [selectedEvent,setSelectedEvent]=useState(null);
+  const [editingEvent,setEditingEvent]=useState(null);
   const MESI=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
   const GIORNI=["Lu","Ma","Me","Gi","Ve","Sa","Do"];
   const getUserColor=uid=>(users.find(u=>u.id===uid)||{}).color||"#8892a4";
@@ -1053,6 +1133,59 @@ function CalendarScreen({records,users,user,onAddEvent}) {
   const prevPeriod=()=>{const d=new Date(cursor);view==="month"?d.setMonth(d.getMonth()-1):d.setDate(d.getDate()-7);setCursor(d);};
   const nextPeriod=()=>{const d=new Date(cursor);view==="month"?d.setMonth(d.getMonth()+1):d.setDate(d.getDate()+7);setCursor(d);};
   const todayStr=today();
+
+  // Modal dettaglio evento
+  const EventDetailModal=({ev,onClose})=>{
+    const u=users.find(x=>x.id===ev.userId);
+    const canEdit=user.role==="Admin"||(ev.userId===user.id);
+    return (
+      <div className="overlay-center" onClick={onClose}>
+        <div className="modal-center" onClick={e=>e.stopPropagation()}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+            <div style={{width:10,height:10,borderRadius:"50%",background:getUserColor(ev.userId),flexShrink:0}}/>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:700,fontSize:15}}>{ev.cliente||"Lavoro"}</div>
+              <div style={{fontSize:12,color:"var(--text2)"}}>{ev.data} · {ev.oraInizio}–{ev.oraFine}</div>
+            </div>
+          </div>
+          {[["Dipendente",u?.name],["Cantiere",ev.cantiere],["Cliente",ev.cliente],["Mezzo",ev.mezzo],["Note",ev.note||ev.nota]].map(([l,v])=>v?<div key={l} className="detail-row"><span className="detail-label">{l}</span><span className="detail-value">{v}</span></div>:null)}
+          {ev.pianificato&&<div style={{marginTop:10,fontSize:11,background:"rgba(9,132,227,.1)",border:"1px solid rgba(9,132,227,.2)",borderRadius:6,padding:"6px 10px",color:"var(--accent2)"}}>📅 Lavoro pianificato dall'admin</div>}
+          {canEdit&&<div style={{display:"flex",gap:8,marginTop:16}}>
+            <button className="btn btn-ghost btn-sm" style={{flex:1}} onClick={()=>{setEditingEvent(ev);onClose();}}><Icon name="edit" size={13}/> Modifica</button>
+            <button className="btn btn-danger btn-sm" style={{flex:1}} onClick={()=>{if(window.confirm("Eliminare questo lavoro?"))onAddEvent(null,ev.id);onClose();}}><Icon name="trash" size={13}/> Elimina</button>
+          </div>}
+          <button className="btn btn-ghost" style={{marginTop:8}} onClick={onClose}>Chiudi</button>
+        </div>
+      </div>
+    );
+  };
+
+  // Modal modifica evento
+  const EditEventModal=({ev,onClose})=>{
+    const dipendenti=users.filter(u=>u.role!=="Admin");
+    const [form,setForm]=useState({userId:String(ev.userId),cliente:ev.cliente||"",cantiere:ev.cantiere||"",oraInizio:ev.oraInizio||"08:00",oraFine:ev.oraFine||"17:00",note:ev.note||ev.nota||""});
+    const handleSave=()=>{
+      if(!form.cliente){showToast("Inserisci il cliente","error");return;}
+      onAddEvent({...ev,...form,userId:Number(form.userId)},null,true);
+      onClose();showToast("Lavoro aggiornato!");
+    };
+    return (
+      <div className="overlay-center" onClick={onClose}>
+        <div className="modal-center" onClick={e=>e.stopPropagation()}>
+          <div style={{fontWeight:700,fontSize:15,marginBottom:14}}>✏️ Modifica lavoro — {ev.data}</div>
+          {user.role==="Admin"&&<Field label="Dipendente"><select className="input" value={form.userId} onChange={e=>setForm(f=>({...f,userId:e.target.value}))}>{dipendenti.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select></Field>}
+          <Field label="Cliente" required><input className="input" value={form.cliente} onChange={e=>setForm(f=>({...f,cliente:e.target.value}))}/></Field>
+          <Field label="Cantiere"><input className="input" value={form.cantiere} onChange={e=>setForm(f=>({...f,cantiere:e.target.value}))}/></Field>
+          <div className="row-2">
+            <Field label="Inizio"><input type="time" className="input" value={form.oraInizio} onChange={e=>setForm(f=>({...f,oraInizio:e.target.value}))}/></Field>
+            <Field label="Fine"><input type="time" className="input" value={form.oraFine} onChange={e=>setForm(f=>({...f,oraFine:e.target.value}))}/></Field>
+          </div>
+          <Field label="Note"><textarea className="input" rows={2} value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))}/></Field>
+          <div className="row-2"><button className="btn btn-ghost" onClick={onClose}>Annulla</button><button className="btn btn-primary" onClick={handleSave}><Icon name="check" size={14}/> Salva</button></div>
+        </div>
+      </div>
+    );
+  };
   return (
     <div className="content">
       <div className="cal-header">
@@ -1075,7 +1208,7 @@ function CalendarScreen({records,users,user,onAddEvent}) {
               return (
                 <div key={i} className={"cal-day"+(item.cur?"":" other-month")+(isToday?" today":"")} onClick={()=>user.role==="Admin"&&onAddEvent(item.date)}>
                   <div className="cal-day-num">{item.date.getDate()}</div>
-                  {evs.slice(0,2).map((ev,j)=><div key={j} className="cal-event" style={{background:getUserColor(ev.userId)}}>{user.role==="Admin"?getUserName(ev.userId).split(" ")[0]:ev.cliente||"Lavoro"}</div>)}
+                  {evs.slice(0,2).map((ev,j)=><div key={j} className="cal-event" style={{background:getUserColor(ev.userId),cursor:"pointer"}} onClick={e=>{e.stopPropagation();setSelectedEvent(ev);}}>{user.role==="Admin"?getUserName(ev.userId).split(" ")[0]:ev.cliente||"Lavoro"}</div>)}
                   {evs.length>2&&<div style={{fontSize:9,color:"var(--text3)"}}>+{evs.length-2}</div>}
                 </div>
               );
@@ -1098,7 +1231,7 @@ function CalendarScreen({records,users,user,onAddEvent}) {
                 </div>
                 {evs.length===0&&<div style={{fontSize:12,color:"var(--text3)",padding:"4px 0"}}>Nessun lavoro</div>}
                 {evs.map((ev,j)=>(
-                  <div key={j} className="week-event" style={{background:getUserColor(ev.userId)+"22"}}>
+                  <div key={j} className="week-event" style={{background:getUserColor(ev.userId)+"22"}} onClick={()=>setSelectedEvent(ev)}>
                     <div className="week-event-dot" style={{background:getUserColor(ev.userId)}}/>
                     <div className="week-event-info">
                       <div className="week-event-title" style={{color:getUserColor(ev.userId)}}>{user.role==="Admin"?getUserName(ev.userId)+" – ":""}{ev.cliente||"Lavoro"}</div>
@@ -1375,12 +1508,15 @@ function QuickNotifModal({onClose,onSend}) {
 }
 
 // ─── APP ROOT ─────────────────────────────────────────────────────────────────
+function lsGet(k,def){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):def;}catch{return def;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+
 export default function App() {
-  const [users,setUsers]               = useState(INITIAL_USERS);
-  const [user,setUser]                 = useState(null);
-  const [records,setRecords]           = useState([]);
-  const [notifs,setNotifs]             = useState(INITIAL_NOTIFICATIONS);
-  const [mezzoAttivo,setMezzo]         = useState("");
+  const [users,setUsers]               = useState(()=>lsGet("rgr_users",INITIAL_USERS));
+  const [user,setUser]                 = useState(()=>lsGet("rgr_session",null));
+  const [records,setRecords]           = useState(()=>lsGet("rgr_records",[]));
+  const [notifs,setNotifs]             = useState(()=>lsGet("rgr_notifs",INITIAL_NOTIFICATIONS));
+  const [mezzoAttivo,setMezzo]         = useState(()=>lsGet("rgr_mezzo",""));
   const [showMezzoPopup,setSMP]        = useState(false);
   const [screen,setScreen]             = useState("home");
   const [selRecord,setSelRecord]       = useState(null);
@@ -1389,8 +1525,16 @@ export default function App() {
   const [showQuickNotif,setQN]         = useState(false);
   const [loginForm,setLF]              = useState({username:"",password:""});
   const [loginError,setLE]             = useState("");
-  const [whistleblowing,setWB]         = useState([]);
-  const [scadenze,setScadenze]         = useState(INITIAL_SCADENZE);
+  const [whistleblowing,setWB]         = useState(()=>lsGet("rgr_wb",[]));
+  const [scadenze,setScadenze]         = useState(()=>lsGet("rgr_scadenze",INITIAL_SCADENZE));
+
+  // Persistenza automatica
+  useEffect(()=>lsSet("rgr_users",users),[users]);
+  useEffect(()=>lsSet("rgr_records",records),[records]);
+  useEffect(()=>lsSet("rgr_notifs",notifs),[notifs]);
+  useEffect(()=>lsSet("rgr_mezzo",mezzoAttivo),[mezzoAttivo]);
+  useEffect(()=>lsSet("rgr_wb",whistleblowing),[whistleblowing]);
+  useEffect(()=>lsSet("rgr_scadenze",scadenze),[scadenze]);
 
   const currentUser=user?users.find(u=>u.id===user.id):null;
   const isAdmin=currentUser?.role==="Admin";
@@ -1402,9 +1546,9 @@ export default function App() {
   const handleLogin=()=>{
     const found=users.find(u=>u.username===loginForm.username&&u.password===loginForm.password);
     if(!found){setLE("Credenziali non corrette");return;}
-    setUser(found);setLE("");
+    setUser(found);lsSet("rgr_session",found);setLE("");
   };
-  const handleLogout=()=>{setUser(null);setScreen("home");setSMP(false);};
+  const handleLogout=()=>{setUser(null);lsSet("rgr_session",null);setScreen("home");setSMP(false);};
   const handleSaveRecord=r=>{setRecords(rs=>rs.find(x=>x.id===r.id)?rs.map(x=>x.id===r.id?r:x):[r,...rs]);setEditRecord(null);setScreen("home");};
   const handleDeleteRecord=id=>{setRecords(rs=>rs.filter(r=>r.id!==id));setSelRecord(null);showToast("Lavoro eliminato");};
   const handleConfirmNotif=id=>setNotifs(ns=>ns.map(n=>n.id===id?{...n,read:[...n.read,currentUser.id]}:n));
@@ -1415,6 +1559,7 @@ export default function App() {
   };
   const handleChangePassword=newPwd=>{
     setUsers(us=>us.map(u=>u.id===currentUser.id?{...u,password:newPwd,firstLogin:false}:u));
+    if(user) { const updated={...user,password:newPwd,firstLogin:false}; setUser(updated); lsSet("rgr_session",updated); }
   };
   const handleQuickNotif=form=>{
     const n={id:Date.now(),title:form.title,body:form.body,type:form.type,date:today(),read:[],createdBy:"Admin"};
@@ -1459,8 +1604,8 @@ export default function App() {
     </>
   );
 
-  // CAMBIO PASSWORD PRIMO ACCESSO
-  if(currentUser?.firstLogin&&!isAdmin) return (
+  // Cambio password obbligatorio anche per admin
+  if(currentUser?.firstLogin) return (
     <>
       <style>{css}</style>
       <Toast/>
@@ -1505,7 +1650,11 @@ export default function App() {
         {screen==="notifs"&&<NotificationsScreen notifications={notifs} user={currentUser} onConfirm={handleConfirmNotif}/>}
         {screen==="profile"&&<ProfileScreen user={currentUser} records={records} onLogout={handleLogout} onChangePassword={handleChangePassword}/>}
         {screen==="whistleblowing"&&<WhistleblowingScreen currentUser={currentUser} onSent={w=>setWB(ws=>[w,...ws])}/>}
-        {screen==="cal"&&<CalendarScreen records={records} users={users} user={currentUser} onAddEvent={d=>setAddEventDate(d)}/>}
+        {screen==="cal"&&<CalendarScreen records={records} users={users} user={currentUser}
+          onAddEvent={d=>setAddEventDate(d)}
+          onDeleteEvent={id=>{setRecords(rs=>rs.filter(r=>r.id!==id));showToast("Lavoro eliminato");}}
+          onEditEvent={ev=>setRecords(rs=>rs.map(r=>r.id===ev.id?ev:r))}
+        />}
         {screen==="admin"&&<AdminPanel users={users} setUsers={setUsers} notifications={notifs} setNotifications={setNotifs} records={records} scadenze={scadenze} setScadenze={setScadenze} whistleblowing={whistleblowing} setWhistleblowing={setWB}/>}
 
         <div className="bottom-nav">
